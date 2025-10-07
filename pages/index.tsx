@@ -117,7 +117,7 @@ export default function Home() {
       Estimate memory & compute for Mixture-of-Experts models.
     </p>
     <label style={{ marginBottom: 12, display: "block", fontWeight: 500 }}>
-      <span style={{ fontSize: "0.97rem" }}>Load Config File (JSON):</span>
+      <span style={{ fontSize: "0.97rem" }}>Load Your Config File (JSON):</span>
       <input
         type="file"
         accept=".json,application/json"
