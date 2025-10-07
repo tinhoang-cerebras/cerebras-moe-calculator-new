@@ -100,8 +100,9 @@ export default function Home() {
         minHeight: "100vh",
         background: "#fff",
         display: "flex",
-        alignItems: "center",
+        alignItems: "flex-start", // Align top
         justifyContent: "center",
+        paddingTop: "3rem",      // Add some space from top
         fontFamily: "Inter, Segoe UI, Arial, sans-serif"
       }}
     >
