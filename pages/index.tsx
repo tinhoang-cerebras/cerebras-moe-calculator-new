@@ -1,4 +1,4 @@
-import { useState, ChangeEvent } from "react";
+import { useState, useRef, ChangeEvent } from "react";
 
 type Config = {
   V: number;
@@ -38,6 +38,7 @@ export default function Home() {
   const [loadingMemory, setLoadingMemory] = useState(false);
   const [loadingFlops, setLoadingFlops] = useState(false);
   const [error, setError] = useState("");
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -54,6 +55,16 @@ export default function Home() {
       }
     };
     reader.readAsText(file);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const file = e.dataTransfer.files[0];
+      const event = { target: { files: [file] } } as unknown as ChangeEvent<HTMLInputElement>;
+      handleFileChange(event);
+    }
   };
 
   const handleCalculate = async (operation: "memory" | "flops") => {
@@ -112,19 +123,61 @@ export default function Home() {
         }}>
           MoE Memory Calculator
         </h1>
-        <label style={{ marginBottom: 16, display: "block", fontWeight: 500 }}>
-          <span style={{ fontSize: "0.97rem" }}>Load your config file (JSON):</span>
-          <input
-            type="file"
-            accept=".json,application/json"
-            onChange={handleFileChange}
+
+        {/* Dropzone File Upload */}
+        <label
+          style={{
+            display: "block",
+            fontWeight: 500,
+            marginBottom: 24
+          }}
+        >
+          <div
             style={{
-              marginTop: 6,
-              display: "block",
+              border: "2px dashed #2563eb",
+              borderRadius: 12,
+              padding: "2rem",
+              textAlign: "center",
+              background: "#f9fafb",
+              cursor: "pointer",
+              transition: "border-color 0.2s",
+              color: "#374151",
               fontSize: "1rem"
             }}
-          />
+            onClick={() => fileInputRef.current?.click()}
+            onDragOver={e => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+            onDrop={handleDrop}
+            tabIndex={0}
+            onKeyPress={e => {
+              if (e.key === "Enter" || e.key === " ") {
+                fileInputRef.current?.click();
+              }
+            }}
+          >
+            <span style={{ color: "#2563eb", fontWeight: 600 }}>
+              Drop file here or choose file
+            </span>
+            <br />
+            <span style={{ fontSize: "0.97rem", color: "#6b7280" }}>
+              (JSON config file)
+            </span>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".json,application/json"
+              onChange={handleFileChange}
+              style={{
+                display: "none"
+              }}
+              tabIndex={-1}
+            />
+          </div>
         </label>
+
+        {/* Precision Dropdown */}
         <label style={{ fontWeight: 500, display: "block", margin: "16px 0" }}>
           Precision:
           <select
@@ -145,6 +198,8 @@ export default function Home() {
             ))}
           </select>
         </label>
+
+        {/* Action Buttons */}
         <div style={{ display: "flex", gap: "1rem", marginTop: 24 }}>
           <button
             type="button"
@@ -187,6 +242,7 @@ export default function Home() {
             {loadingFlops ? "Calculating..." : "How fast will it run"}
           </button>
         </div>
+        {/* Error */}
         {error && (
           <div style={{
             color: "#b91c1c",
@@ -199,6 +255,7 @@ export default function Home() {
             {error}
           </div>
         )}
+        {/* Memory Result */}
         {memoryResult && (
           <div
             style={{
@@ -225,6 +282,7 @@ export default function Home() {
               .join('\n')}
           </div>
         )}
+        {/* FLOPs Result */}
         {flopsResult && (
           <div
             style={{
