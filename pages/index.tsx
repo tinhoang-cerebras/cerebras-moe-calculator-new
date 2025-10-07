@@ -30,6 +30,19 @@ const PRECISIONS = [
   "int4",
 ];
 
+const configTemplate = {
+  name: "Default MoE Configuration",
+  V: 32000,
+  h: 4096,
+  l: 32,
+  a: 32,
+  N: 8,
+  f_mult: 1.25,
+  s: 2048,
+  top_k: 2,
+  precision: "bfloat16"
+};
+
 export default function Home() {
   const [precision, setPrecision] = useState("bfloat16");
   const [config, setConfig] = useState<Config>(defaultConfig);
@@ -38,6 +51,7 @@ export default function Home() {
   const [loadingMemory, setLoadingMemory] = useState(false);
   const [loadingFlops, setLoadingFlops] = useState(false);
   const [error, setError] = useState("");
+  const [showTemplate, setShowTemplate] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -110,12 +124,84 @@ export default function Home() {
         minHeight: "100vh",
         background: "#fff",
         display: "flex",
-        alignItems: "flex-start", // Align top
+        alignItems: "flex-start",
         justifyContent: "center",
         paddingTop: "3rem",
         fontFamily: "Inter, Segoe UI, Arial, sans-serif"
       }}
     >
+      {/* Modal for JSON template */}
+      {showTemplate && (
+        <div
+          onClick={() => setShowTemplate(false)}
+          style={{
+            position: "fixed",
+            zIndex: 100,
+            inset: 0,
+            background: "rgba(30, 41, 59, 0.38)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center"
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: "#fff",
+              borderRadius: 14,
+              maxWidth: 500,
+              width: "90vw",
+              boxShadow: "0 4px 32px rgba(0,0,0,0.18)",
+              padding: "2rem",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "stretch",
+              border: "1px solid #e5e7eb",
+              position: "relative"
+            }}
+          >
+            <h3 style={{ fontWeight: 600, fontSize: "1.15rem", marginBottom: "1rem", color: "#1e293b" }}>
+              Config JSON Template
+            </h3>
+            <pre
+              style={{
+                background: "#f9fafb",
+                color: "#22223b",
+                borderRadius: 8,
+                padding: "1rem",
+                fontSize: "0.97rem",
+                lineHeight: 1.5,
+                marginBottom: "1.5rem",
+                fontFamily: "Menlo, Monaco, 'Liberation Mono', Consolas, monospace",
+                overflowX: "auto"
+              }}
+            >
+              {JSON.stringify(configTemplate, null, 2)}
+            </pre>
+            <button
+              onClick={() => setShowTemplate(false)}
+              style={{
+                alignSelf: "flex-end",
+                border: "none",
+                borderRadius: 6,
+                padding: "0.5rem 1.2rem",
+                background: "linear-gradient(to bottom, #e5e7eb, #d1d5db)",
+                color: "#333",
+                fontFamily: "Menlo, Monaco, 'Liberation Mono', Consolas, monospace",
+                fontWeight: 400,
+                cursor: "pointer",
+                fontSize: "1rem",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+                transition: "background 0.18s"
+              }}
+              autoFocus
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
       <div
         style={{
           background: "#fff",
@@ -134,6 +220,27 @@ export default function Home() {
         }}>
           MoE Memory Calculator
         </h1>
+
+        {/* Template Link */}
+        <div style={{ marginBottom: 8 }}>
+          <button
+            type="button"
+            onClick={() => setShowTemplate(true)}
+            style={{
+              border: "none",
+              background: "none",
+              color: "#2563eb",
+              textDecoration: "underline",
+              cursor: "pointer",
+              fontSize: "1rem",
+              padding: 0,
+              margin: 0,
+              fontWeight: 400
+            }}
+          >
+            Show config JSON template
+          </button>
+        </div>
 
         {/* Dropzone File Upload */}
         <label
