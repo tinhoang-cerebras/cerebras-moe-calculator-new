@@ -157,7 +157,10 @@ export default function Home() {
               }
             }}
           >
-            <span style={{ color: "#2563eb", fontWeight: 600 }}>
+            <span style={{
+              color: "#6b7280", // gray-500, same as below
+              fontWeight: 400 // regular
+            }}>
               Drop file here or choose file
             </span>
             <br />
@@ -212,7 +215,7 @@ export default function Home() {
               border: "none",
               background: loadingMemory ? "#cbd5e1" : "#2563eb",
               color: "#fff",
-              fontWeight: 600,
+              fontWeight: 400, // regular
               fontSize: "1.08rem",
               fontFamily: "Menlo, Monaco, 'Liberation Mono', Consolas, monospace",
               cursor: loadingMemory ? "not-allowed" : "pointer",
@@ -233,7 +236,7 @@ export default function Home() {
               border: "none",
               background: loadingFlops ? "#cbd5e1" : "#10b981",
               color: "#fff",
-              fontWeight: 600,
+              fontWeight: 400, // regular
               fontSize: "1.08rem",
               fontFamily: "Menlo, Monaco, 'Liberation Mono', Consolas, monospace",
               cursor: loadingFlops ? "not-allowed" : "pointer",
