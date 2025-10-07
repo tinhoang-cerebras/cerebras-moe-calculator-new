@@ -164,7 +164,7 @@ export default function Home() {
               transition: "background 0.18s"
             }}
           >
-            {loadingMemory ? "Calculating..." : "Calculate Memory"}
+            {loadingMemory ? "Calculating..." : "How much memory do I need"}
           </button>
           <button
             type="button"
@@ -184,7 +184,7 @@ export default function Home() {
               transition: "background 0.18s"
             }}
           >
-            {loadingFlops ? "Calculating..." : "Calculate FLOPs"}
+            {loadingFlops ? "Calculating..." : "How fast will it run"}
           </button>
         </div>
         {error && (
