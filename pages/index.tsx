@@ -87,7 +87,7 @@ export default function Home() {
     <main
       style={{
         minHeight: "100vh",
-        background: "linear-gradient(135deg, #f8fafc 0%, #e0e7ef 100%)",
+        background: "#fff",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
