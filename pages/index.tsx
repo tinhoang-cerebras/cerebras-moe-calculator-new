@@ -158,7 +158,7 @@ export default function Home() {
             </select>
           </label>
           {/* All other fields */}
-          {[
+          {([
             { label: "Vocab Size (V):", name: "V", type: "number" },
             { label: "Hidden Size (h):", name: "h", type: "number" },
             { label: "Num Layers (l):", name: "l", type: "number" },
@@ -167,7 +167,7 @@ export default function Home() {
             { label: "Expert Multiplier (f_mult):", name: "f_mult", type: "number", step: "0.01" },
             { label: "Sequence Length (s):", name: "s", type: "number" },
             { label: "Top K:", name: "top_k", type: "number" }
-          ].map(field => {
+          ] as const).map(field => {
             const key = field.name as keyof Config;
             return (
               <label key={field.name} style={{ fontWeight: 500 }}>
@@ -238,7 +238,9 @@ export default function Home() {
               wordBreak: "break-word",
               border: "1px solid #e5e7eb",
               maxWidth: "100%",
-              overflowX: "auto"
+              overflowX: "auto",
+              boxSizing: "border-box",
+              minWidth: 0,
             }}
           >
             {result}
