@@ -64,6 +64,7 @@ export default function Home() {
       const file = e.dataTransfer.files[0];
       const event = { target: { files: [file] } } as unknown as ChangeEvent<HTMLInputElement>;
       handleFileChange(event);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
@@ -94,6 +95,15 @@ export default function Home() {
     }
   };
 
+  const handleReset = () => {
+    setConfig(defaultConfig);
+    setPrecision("bfloat16");
+    setMemoryResult("");
+    setFlopsResult("");
+    setError("");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
   return (
     <main
       style={{
@@ -102,7 +112,7 @@ export default function Home() {
         display: "flex",
         alignItems: "flex-start", // Align top
         justifyContent: "center",
-        paddingTop: "3rem",      // Add some space from top
+        paddingTop: "3rem",
         fontFamily: "Inter, Segoe UI, Arial, sans-serif"
       }}
     >
@@ -330,6 +340,29 @@ export default function Home() {
               .join('\n')}
           </div>
         )}
+
+        {/* Reset Button */}
+        <button
+          type="button"
+          onClick={handleReset}
+          style={{
+            marginTop: "2rem",
+            width: "100%",
+            padding: "0.75rem",
+            borderRadius: 8,
+            border: "none",
+            background: "linear-gradient(to bottom, #f3f4f6 0%, #d1d5db 100%)",
+            color: "#333",
+            fontWeight: 400,
+            fontSize: "1.08rem",
+            fontFamily: "Menlo, Monaco, 'Liberation Mono', Consolas, monospace",
+            cursor: "pointer",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+            transition: "background 0.18s"
+          }}
+        >
+          Reset
+        </button>
       </div>
     </main>
   );
