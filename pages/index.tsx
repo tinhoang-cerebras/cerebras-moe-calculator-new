@@ -134,7 +134,7 @@ export default function Home() {
         >
           <div
             style={{
-              border: "2px dashed #d1d5db", // light gray
+              border: "2px dashed #d1d5db",
               borderRadius: 12,
               padding: "2rem",
               textAlign: "center",
@@ -180,6 +180,17 @@ export default function Home() {
           </div>
         </label>
 
+        {/* New Text Between Upload and Precision */}
+        <div style={{
+          textAlign: 'center',
+          color: '#6b7280',
+          marginBottom: 10,
+          marginTop: -10,
+          fontSize: "1rem"
+        }}>
+          or select a precision below
+        </div>
+
         {/* Precision Dropdown */}
         <label style={{ fontWeight: 500, display: "block", margin: "16px 0" }}>
           Precision:
@@ -217,7 +228,7 @@ export default function Home() {
                 ? "linear-gradient(to bottom, #e5e7eb, #d1d5db)"
                 : "linear-gradient(to bottom, #e5e7eb 0%, #d1d5db 100%)",
               color: "#333",
-              fontWeight: 400, // regular
+              fontWeight: 400,
               fontSize: "1.08rem",
               fontFamily: "Menlo, Monaco, 'Liberation Mono', Consolas, monospace",
               cursor: loadingMemory ? "not-allowed" : "pointer",
@@ -240,7 +251,7 @@ export default function Home() {
                 ? "linear-gradient(to bottom, #e5e7eb, #d1d5db)"
                 : "linear-gradient(to bottom, #e5e7eb 0%, #d1d5db 100%)",
               color: "#333",
-              fontWeight: 400, // regular
+              fontWeight: 400,
               fontSize: "1.08rem",
               fontFamily: "Menlo, Monaco, 'Liberation Mono', Consolas, monospace",
               cursor: loadingFlops ? "not-allowed" : "pointer",
