@@ -52,7 +52,6 @@ export default function Home() {
     reader.onload = (event) => {
       try {
         const parsed = JSON.parse(event.target?.result as string);
-        // Only use keys relevant to config
         const loadedConfig: Config = { ...defaultConfig, ...parsed };
         setConfig(loadedConfig);
         setError("");
@@ -177,7 +176,7 @@ export default function Home() {
                   name={field.name}
                   value={config[key]}
                   onChange={handleConfigChange}
-                  step={field.step}
+                  {...("step" in field ? { step: field.step } : {})}
                   style={{
                     marginTop: 4,
                     width: "100%",
