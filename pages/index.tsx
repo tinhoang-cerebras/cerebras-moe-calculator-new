@@ -173,7 +173,7 @@ export default function Home() {
           <input
             type={field.type}
             name={field.name}
-            value={config[field.name]}
+            value={config[field.name as keyof Config]}
             onChange={handleConfigChange}
             step={field.step}
             style={{
