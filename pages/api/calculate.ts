@@ -205,18 +205,18 @@ function formatResult(metrics: ReturnType<MoEMemoryCalculator["calculate_total"]
 
   return `
 Memory Requirements for MoE Model
-==================================================
+
 Precision: ${metrics.precision}
 Model Weights: ${metrics.weights_gb.toFixed(2)} GB
 KV-Cache: ${metrics.kv_cache_gb.toFixed(2)} GB
-==================================================
+
 TOTAL MEMORY NEEDED: ${metrics.total_gb.toFixed(2)} GB!
 
 FLOPs Requirements
-==================================================
+
 Prefill FLOPs: ${prefill_tflops.toFixed(2)} TFLOPs
 Decode FLOPs (per token): ${decode_tflops.toFixed(6)} TFLOPs
-==================================================
+
 `;
 }
 
