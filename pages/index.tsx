@@ -96,39 +96,39 @@ export default function Home() {
           style={{marginBottom: "1rem"}}
         />
       </label>
-      <form onSubmit={handleSubmit} style={{display: "grid", gap: "1rem", marginTop: "1rem"}}>
-        <label>
-          Vocab Size (V): <input type="number" name="V" value={config.V} onChange={handleConfigChange} />
-        </label>
-        <label>
-          Hidden Size (h): <input type="number" name="h" value={config.h} onChange={handleConfigChange} />
-        </label>
-        <label>
-          Num Layers (l): <input type="number" name="l" value={config.l} onChange={handleConfigChange} />
-        </label>
-        <label>
-          Attention Heads (a): <input type="number" name="a" value={config.a} onChange={handleConfigChange} />
-        </label>
-        <label>
-          Num Experts (N): <input type="number" name="N" value={config.N} onChange={handleConfigChange} />
-        </label>
-        <label>
-          Expert Multiplier (f_mult): <input type="number" step="0.01" name="f_mult" value={config.f_mult} onChange={handleConfigChange} />
-        </label>
-        <label>
-          Sequence Length (s): <input type="number" name="s" value={config.s} onChange={handleConfigChange} />
-        </label>
-        <label>
-          Top K: <input type="number" name="top_k" value={config.top_k} onChange={handleConfigChange} />
-        </label>
-        <label>
-          Precision:
-          <select value={precision} onChange={e => setPrecision(e.target.value)}>
-            {PRECISIONS.map(p => <option key={p} value={p}>{p}</option>)}
-          </select>
-        </label>
-        <button type="submit" disabled={loading}>{loading ? "Calculating..." : "Calculate"}</button>
-      </form>
+<form onSubmit={handleSubmit} style={{display: "grid", gap: "1rem", marginTop: "1rem"}}>
+  <label>
+    Precision:
+    <select value={precision} onChange={e => setPrecision(e.target.value)}>
+      {PRECISIONS.map(p => <option key={p} value={p}>{p}</option>)}
+    </select>
+  </label>
+  <label>
+    Vocab Size (V): <input type="number" name="V" value={config.V} onChange={handleConfigChange} />
+  </label>
+  <label>
+    Hidden Size (h): <input type="number" name="h" value={config.h} onChange={handleConfigChange} />
+  </label>
+  <label>
+    Num Layers (l): <input type="number" name="l" value={config.l} onChange={handleConfigChange} />
+  </label>
+  <label>
+    Attention Heads (a): <input type="number" name="a" value={config.a} onChange={handleConfigChange} />
+  </label>
+  <label>
+    Num Experts (N): <input type="number" name="N" value={config.N} onChange={handleConfigChange} />
+  </label>
+  <label>
+    Expert Multiplier (f_mult): <input type="number" step="0.01" name="f_mult" value={config.f_mult} onChange={handleConfigChange} />
+  </label>
+  <label>
+    Sequence Length (s): <input type="number" name="s" value={config.s} onChange={handleConfigChange} />
+  </label>
+  <label>
+    Top K: <input type="number" name="top_k" value={config.top_k} onChange={handleConfigChange} />
+  </label>
+  <button type="submit" disabled={loading}>{loading ? "Calculating..." : "Calculate"}</button>
+</form>
       {error && <div style={{color: "red", marginTop: "1rem"}}>{error}</div>}
       <pre style={{marginTop:"2rem", whiteSpace:"pre-wrap", background:"#eee", padding:"1rem", borderRadius:8}}>
         {result}
