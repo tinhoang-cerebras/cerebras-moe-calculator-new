@@ -1,4 +1,4 @@
-import { useState, useRef, ChangeEvent } from "react";
+import { useState, useRef, useEffect, ChangeEvent } from "react";
 
 type Config = {
   V: number;
@@ -52,8 +52,20 @@ export default function Home() {
   const [loadingFlops, setLoadingFlops] = useState(false);
   const [error, setError] = useState("");
   const [showTemplate, setShowTemplate] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
   const [copied, setCopied] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Handle modal mount/unmount for animation
+  useEffect(() => {
+    if (showTemplate) {
+      setModalVisible(true);
+    } else if (modalVisible) {
+      // Wait for animation before removing from DOM
+      const timeout = setTimeout(() => setModalVisible(false), 180); // match transition time
+      return () => clearTimeout(timeout);
+    }
+  }, [showTemplate]);
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -137,8 +149,8 @@ export default function Home() {
         fontFamily: "Inter, Segoe UI, Arial, sans-serif"
       }}
     >
-      {/* Modal for JSON template */}
-      {showTemplate && (
+      {/* Modal for JSON template with animation */}
+      {modalVisible && (
         <div
           onClick={() => setShowTemplate(false)}
           style={{
@@ -148,7 +160,10 @@ export default function Home() {
             background: "rgba(30, 41, 59, 0.38)",
             display: "flex",
             alignItems: "center",
-            justifyContent: "center"
+            justifyContent: "center",
+            transition: "opacity 180ms cubic-bezier(.4,0,.2,1)",
+            opacity: showTemplate ? 1 : 0,
+            pointerEvents: showTemplate ? "auto" : "none"
           }}
         >
           <div
@@ -164,7 +179,13 @@ export default function Home() {
               flexDirection: "column",
               alignItems: "stretch",
               border: "1px solid #e5e7eb",
-              position: "relative"
+              position: "relative",
+              transform: showTemplate
+                ? "scale(1) translateY(0px)"
+                : "scale(0.96) translateY(18px)",
+              opacity: showTemplate ? 1 : 0,
+              transition:
+                "opacity 180ms cubic-bezier(.4,0,.2,1), transform 180ms cubic-bezier(.4,0,.2,1)"
             }}
           >
             <h3 style={{ fontWeight: 600, fontSize: "1.15rem", marginBottom: "1rem", color: "#1e293b" }}>
