@@ -1,4 +1,26 @@
-import { useState, ChangeEvent, FormEvent } from "react";
+import { useState, ChangeEvent } from "react";
+
+type Config = {
+  V: number;
+  h: number;
+  l: number;
+  a: number;
+  N: number;
+  f_mult: number;
+  s: number;
+  top_k: number;
+};
+
+const defaultConfig: Config = {
+  V: 32000,
+  h: 4096,
+  l: 32,
+  a: 32,
+  N: 8,
+  f_mult: 1.25,
+  s: 2048,
+  top_k: 2,
+};
 
 const PRECISIONS = [
   "float32",
@@ -10,11 +32,29 @@ const PRECISIONS = [
 
 export default function Home() {
   const [precision, setPrecision] = useState("bfloat16");
+  const [config, setConfig] = useState<Config>(defaultConfig);
   const [memoryResult, setMemoryResult] = useState("");
   const [flopsResult, setFlopsResult] = useState("");
   const [loadingMemory, setLoadingMemory] = useState(false);
   const [loadingFlops, setLoadingFlops] = useState(false);
   const [error, setError] = useState("");
+
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const parsed = JSON.parse(event.target?.result as string);
+        const loadedConfig: Config = { ...defaultConfig, ...parsed };
+        setConfig(loadedConfig);
+        setError("");
+      } catch {
+        setError("Invalid JSON configuration file.");
+      }
+    };
+    reader.readAsText(file);
+  };
 
   const handleCalculate = async (operation: "memory" | "flops") => {
     if (operation === "memory") setLoadingMemory(true);
@@ -24,7 +64,7 @@ export default function Home() {
       const res = await fetch("/api/calculate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ precision, operation })
+        body: JSON.stringify({ config, precision, operation })
       });
       const data = await res.json();
       if (data.error) {
@@ -72,78 +112,81 @@ export default function Home() {
         }}>
           MoE Memory Calculator
         </h1>
-        <form
-          onSubmit={(e) => e.preventDefault()}
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "1.5rem",
-            marginTop: "1rem"
-          }}
-        >
-          <label style={{ fontWeight: 500 }}>
-            Precision:
-            <select
-              value={precision}
-              onChange={e => setPrecision(e.target.value)}
-              style={{
-                marginTop: 8,
-                padding: "0.6rem",
-                borderRadius: 8,
-                border: "1px solid #e5e7eb",
-                background: "#f9fafb",
-                fontSize: "1rem",
-                width: "100%"
-              }}
-            >
-              {PRECISIONS.map(p => (
-                <option key={p} value={p}>{p}</option>
-              ))}
-            </select>
-          </label>
-          <div style={{ display: "flex", gap: "1rem" }}>
-            <button
-              type="button"
-              disabled={loadingMemory}
-              onClick={() => handleCalculate("memory")}
-              style={{
-                flex: 1,
-                padding: "0.75rem",
-                borderRadius: 8,
-                border: "none",
-                background: loadingMemory ? "#cbd5e1" : "#2563eb",
-                color: "#fff",
-                fontWeight: 600,
-                fontSize: "1.08rem",
-                cursor: loadingMemory ? "not-allowed" : "pointer",
-                boxShadow: "0 2px 8px rgba(37,99,235,.06)",
-                transition: "background 0.18s"
-              }}
-            >
-              {loadingMemory ? "Calculating..." : "Calculate Memory"}
-            </button>
-            <button
-              type="button"
-              disabled={loadingFlops}
-              onClick={() => handleCalculate("flops")}
-              style={{
-                flex: 1,
-                padding: "0.75rem",
-                borderRadius: 8,
-                border: "none",
-                background: loadingFlops ? "#cbd5e1" : "#10b981",
-                color: "#fff",
-                fontWeight: 600,
-                fontSize: "1.08rem",
-                cursor: loadingFlops ? "not-allowed" : "pointer",
-                boxShadow: "0 2px 8px rgba(16,185,129,.09)",
-                transition: "background 0.18s"
-              }}
-            >
-              {loadingFlops ? "Calculating..." : "Calculate FLOPs"}
-            </button>
-          </div>
-        </form>
+        <label style={{ marginBottom: 16, display: "block", fontWeight: 500 }}>
+          <span style={{ fontSize: "0.97rem" }}>Load your config file (JSON):</span>
+          <input
+            type="file"
+            accept=".json,application/json"
+            onChange={handleFileChange}
+            style={{
+              marginTop: 6,
+              display: "block",
+              fontSize: "1rem"
+            }}
+          />
+        </label>
+        <label style={{ fontWeight: 500, display: "block", margin: "16px 0" }}>
+          Precision:
+          <select
+            value={precision}
+            onChange={e => setPrecision(e.target.value)}
+            style={{
+              marginTop: 8,
+              padding: "0.6rem",
+              borderRadius: 8,
+              border: "1px solid #e5e7eb",
+              background: "#f9fafb",
+              fontSize: "1rem",
+              width: "100%"
+            }}
+          >
+            {PRECISIONS.map(p => (
+              <option key={p} value={p}>{p}</option>
+            ))}
+          </select>
+        </label>
+        <div style={{ display: "flex", gap: "1rem", marginTop: 24 }}>
+          <button
+            type="button"
+            disabled={loadingMemory}
+            onClick={() => handleCalculate("memory")}
+            style={{
+              flex: 1,
+              padding: "0.75rem",
+              borderRadius: 8,
+              border: "none",
+              background: loadingMemory ? "#cbd5e1" : "#2563eb",
+              color: "#fff",
+              fontWeight: 600,
+              fontSize: "1.08rem",
+              cursor: loadingMemory ? "not-allowed" : "pointer",
+              boxShadow: "0 2px 8px rgba(37,99,235,.06)",
+              transition: "background 0.18s"
+            }}
+          >
+            {loadingMemory ? "Calculating..." : "Calculate Memory"}
+          </button>
+          <button
+            type="button"
+            disabled={loadingFlops}
+            onClick={() => handleCalculate("flops")}
+            style={{
+              flex: 1,
+              padding: "0.75rem",
+              borderRadius: 8,
+              border: "none",
+              background: loadingFlops ? "#cbd5e1" : "#10b981",
+              color: "#fff",
+              fontWeight: 600,
+              fontSize: "1.08rem",
+              cursor: loadingFlops ? "not-allowed" : "pointer",
+              boxShadow: "0 2px 8px rgba(16,185,129,.09)",
+              transition: "background 0.18s"
+            }}
+          >
+            {loadingFlops ? "Calculating..." : "Calculate FLOPs"}
+          </button>
+        </div>
         {error && (
           <div style={{
             color: "#b91c1c",
