@@ -1,5 +1,3 @@
-// This file should be placed in your Next.js project's pages/api directory.
-
 import type { NextApiRequest, NextApiResponse } from "next";
 
 const PRECISION_BYTES: Record<string, number> = {
@@ -199,25 +197,31 @@ class MoEMemoryCalculator {
   }
 }
 
-function formatResult(metrics: ReturnType<MoEMemoryCalculator["calculate_total"]>) {
+// Format only memory section
+function formatMemory(metrics: ReturnType<MoEMemoryCalculator["calculate_total"]>) {
+  return (
+    `Memory Requirements for MoE Model\n` +
+    `Precision: ${metrics.precision}\n` +
+    `Model Weights: ${metrics.weights_gb.toFixed(2)} GB\n` +
+    `KV-Cache: ${metrics.kv_cache_gb.toFixed(2)} GB\n` +
+    `TOTAL MEMORY NEEDED: ${metrics.total_gb.toFixed(2)} GB!\n`
+  );
+}
+
+// Format only FLOPs section
+function formatFlops(metrics: ReturnType<MoEMemoryCalculator["calculate_total"]>) {
   const prefill_tflops = metrics.prefill_flops / 1e12;
   const decode_tflops = metrics.decode_flops / 1e12;
+  return (
+    `FLOPs Requirements\n` +
+    `Prefill FLOPs: ${prefill_tflops.toFixed(2)} TFLOPs\n` +
+    `Decode FLOPs (per token): ${decode_tflops.toFixed(6)} TFLOPs\n`
+  );
+}
 
-  return `
-Memory Requirements for MoE Model
-
-Precision: ${metrics.precision}
-Model Weights: ${metrics.weights_gb.toFixed(2)} GB
-KV-Cache: ${metrics.kv_cache_gb.toFixed(2)} GB
-
-TOTAL MEMORY NEEDED: ${metrics.total_gb.toFixed(2)} GB!
-
-FLOPs Requirements
-
-Prefill FLOPs: ${prefill_tflops.toFixed(2)} TFLOPs
-Decode FLOPs (per token): ${decode_tflops.toFixed(6)} TFLOPs
-
-`;
+// Format both (for backward compatibility)
+function formatBoth(metrics: ReturnType<MoEMemoryCalculator["calculate_total"]>) {
+  return formatMemory(metrics) + "\n" + formatFlops(metrics);
 }
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -235,11 +239,19 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       ? req.body.precision
       : "bfloat16";
 
+  const operation = req.body.operation; // "memory" or "flops"
+
   try {
     const calculator = new MoEMemoryCalculator(config, precision);
     const metrics = calculator.calculate_total();
+
+    let result = "";
+    if (operation === "memory") result = formatMemory(metrics);
+    else if (operation === "flops") result = formatFlops(metrics);
+    else result = formatBoth(metrics);
+
     res.status(200).json({
-      result: formatResult(metrics),
+      result,
       metrics,
     });
   } catch (e) {
