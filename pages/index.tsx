@@ -52,6 +52,7 @@ export default function Home() {
   const [loadingFlops, setLoadingFlops] = useState(false);
   const [error, setError] = useState("");
   const [showTemplate, setShowTemplate] = useState(false);
+  const [copied, setCopied] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -118,6 +119,12 @@ export default function Home() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  const handleCopy = () => {
+    navigator.clipboard.writeText(JSON.stringify(configTemplate, null, 2));
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1300);
+  };
+
   return (
     <main
       style={{
@@ -178,26 +185,45 @@ export default function Home() {
             >
               {JSON.stringify(configTemplate, null, 2)}
             </pre>
-            <button
-              onClick={() => setShowTemplate(false)}
-              style={{
-                alignSelf: "flex-end",
-                border: "none",
-                borderRadius: 6,
-                padding: "0.5rem 1.2rem",
-                background: "linear-gradient(to bottom, #e5e7eb, #d1d5db)",
-                color: "#333",
-                fontFamily: "Menlo, Monaco, 'Liberation Mono', Consolas, monospace",
-                fontWeight: 400,
-                cursor: "pointer",
-                fontSize: "1rem",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-                transition: "background 0.18s"
-              }}
-              autoFocus
-            >
-              Close
-            </button>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem" }}>
+              <button
+                onClick={handleCopy}
+                style={{
+                  border: "none",
+                  borderRadius: 6,
+                  padding: "0.5rem 1.2rem",
+                  background: "linear-gradient(to bottom, #e5e7eb, #d1d5db)",
+                  color: "#333",
+                  fontFamily: "Menlo, Monaco, 'Liberation Mono', Consolas, monospace",
+                  fontWeight: 400,
+                  cursor: "pointer",
+                  fontSize: "1rem",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+                  transition: "background 0.18s"
+                }}
+              >
+                {copied ? "Copied!" : "Copy"}
+              </button>
+              <button
+                onClick={() => setShowTemplate(false)}
+                style={{
+                  border: "none",
+                  borderRadius: 6,
+                  padding: "0.5rem 1.2rem",
+                  background: "linear-gradient(to bottom, #e5e7eb, #d1d5db)",
+                  color: "#333",
+                  fontFamily: "Menlo, Monaco, 'Liberation Mono', Consolas, monospace",
+                  fontWeight: 400,
+                  cursor: "pointer",
+                  fontSize: "1rem",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+                  transition: "background 0.18s"
+                }}
+                autoFocus
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
