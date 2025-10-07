@@ -214,6 +214,7 @@ export default function Home() {
               color: "#fff",
               fontWeight: 600,
               fontSize: "1.08rem",
+              fontFamily: "Menlo, Monaco, 'Liberation Mono', Consolas, monospace",
               cursor: loadingMemory ? "not-allowed" : "pointer",
               boxShadow: "0 2px 8px rgba(37,99,235,.06)",
               transition: "background 0.18s"
@@ -227,5 +228,90 @@ export default function Home() {
             onClick={() => handleCalculate("flops")}
             style={{
               flex: 1,
-              padding: "0*
-
+              padding: "0.75rem",
+              borderRadius: 8,
+              border: "none",
+              background: loadingFlops ? "#cbd5e1" : "#10b981",
+              color: "#fff",
+              fontWeight: 600,
+              fontSize: "1.08rem",
+              fontFamily: "Menlo, Monaco, 'Liberation Mono', Consolas, monospace",
+              cursor: loadingFlops ? "not-allowed" : "pointer",
+              boxShadow: "0 2px 8px rgba(16,185,129,.09)",
+              transition: "background 0.18s"
+            }}
+          >
+            {loadingFlops ? "Calculating..." : "How fast will it run"}
+          </button>
+        </div>
+        {/* Error */}
+        {error && (
+          <div style={{
+            color: "#b91c1c",
+            background: "#fee2e2",
+            borderRadius: 8,
+            padding: "0.75rem",
+            marginTop: 18,
+            fontWeight: 500
+          }}>
+            {error}
+          </div>
+        )}
+        {/* Memory Result */}
+        {memoryResult && (
+          <div
+            style={{
+              background: "#fff",
+              borderRadius: 16,
+              boxShadow: "0 2px 12px rgba(0,0,0,0.07)",
+              padding: "1.5rem",
+              marginTop: "2rem",
+              color: "#264653",
+              fontSize: "1.07rem",
+              fontFamily: "Menlo, Monaco, 'Liberation Mono', Consolas, monospace",
+              whiteSpace: "pre-wrap",
+              wordBreak: "break-word",
+              border: "1px solid #e5e7eb",
+              maxWidth: "100%",
+              overflowX: "auto",
+              boxSizing: "border-box",
+              minWidth: 0,
+            }}
+          >
+            {memoryResult
+              .split('\n')
+              .filter(line => !/^=+$/.test(line.trim()))
+              .join('\n')}
+          </div>
+        )}
+        {/* FLOPs Result */}
+        {flopsResult && (
+          <div
+            style={{
+              background: "#fff",
+              borderRadius: 16,
+              boxShadow: "0 2px 12px rgba(0,0,0,0.07)",
+              padding: "1.5rem",
+              marginTop: "2rem",
+              color: "#14532d",
+              fontSize: "1.07rem",
+              fontFamily: "Menlo, Monaco, 'Liberation Mono', Consolas, monospace",
+              whiteSpace: "pre-wrap",
+              wordBreak: "break-word",
+              border: "1px solid #e5e7eb",
+              maxWidth: "100%",
+              overflowX: "auto",
+              boxSizing: "border-box",
+              minWidth: 0,
+            }}
+          >
+            {flopsResult
+              .split('\n')
+              .filter(line => !/^=+$/.test(line.trim()))
+              .join('\n')}
+          </div>
+        )}
+      </div>
+    </main>
+  );
+}
