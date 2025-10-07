@@ -99,8 +99,8 @@ export default function Home() {
           background: "#fff",
           borderRadius: 20,
           boxShadow: "0 4px 32px rgba(0,0,0,0.07)",
-          padding: "2.5rem 2rem",
-          maxWidth: 420,
+          padding: "2.5rem 2.5rem",
+          maxWidth: 800,
           width: "100%"
         }}
       >
@@ -131,13 +131,14 @@ export default function Home() {
         <form
           onSubmit={handleSubmit}
           style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "1rem"
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "1rem 2rem",
+            marginTop: "1rem"
           }}
         >
-          {/* Precision at the top */}
-          <label style={{ fontWeight: 500 }}>
+          {/* Precision at the top, span both columns */}
+          <label style={{ fontWeight: 500, gridColumn: "1 / span 2" }}>
             Precision:
             <select
               value={precision}
@@ -148,7 +149,8 @@ export default function Home() {
                 borderRadius: 8,
                 border: "1px solid #e5e7eb",
                 background: "#f9fafb",
-                fontSize: "1rem"
+                fontSize: "1rem",
+                width: "100%"
               }}
             >
               {PRECISIONS.map(p => (
@@ -156,7 +158,7 @@ export default function Home() {
               ))}
             </select>
           </label>
-          {/* All other fields */}
+          {/* All other fields, 2 per row */}
           {([
             { label: "Vocab Size (V):", name: "V", type: "number" },
             { label: "Hidden Size (h):", name: "h", type: "number" },
@@ -190,6 +192,7 @@ export default function Home() {
               </label>
             );
           })}
+          {/* Calculate button spans both columns */}
           <button
             type="submit"
             disabled={loading}
@@ -204,7 +207,8 @@ export default function Home() {
               fontSize: "1.08rem",
               cursor: loading ? "not-allowed" : "pointer",
               boxShadow: "0 2px 8px rgba(37,99,235,.06)",
-              transition: "background 0.18s"
+              transition: "background 0.18s",
+              gridColumn: "1 / span 2"
             }}
           >
             {loading ? "Calculating..." : "Calculate"}
@@ -242,7 +246,12 @@ export default function Home() {
               minWidth: 0,
             }}
           >
-            {result}
+            {/* Remove lines with only "====..." for a cleaner look */}
+            {result
+              .split('\n')
+              .filter(line => !/^=+$/.test(line.trim()))
+              .join('\n')
+            }
           </div>
         )}
       </div>
