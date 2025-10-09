@@ -610,5 +610,70 @@ export default function Home() {
               fontFamily: "Menlo, Monaco, 'Liberation Mono', Consolas, monospace",
               whiteSpace: "pre-wrap",
               wordBreak: "break-word",
-              border:*
-
+              border: "1px solid #e5e7eb",
+              maxWidth: "100%",
+              overflowX: "auto",
+              boxSizing: "border-box",
+              minWidth: 0,
+            }}
+          >
+            {memoryResult
+              .split('\n')
+              .filter(line => !/^=+$/.test(line.trim()))
+              .join('\n')}
+          </div>
+        )}
+        {/* FLOPs Result */}
+        {flopsResult && (
+          <div
+            style={{
+              background: "#fff",
+              borderRadius: 16,
+              boxShadow: "0 2px 12px rgba(0,0,0,0.07)",
+              padding: "1.5rem",
+              marginTop: "2rem",
+              color: "#14532d",
+              fontSize: "1.07rem",
+              fontFamily: "Menlo, Monaco, 'Liberation Mono', Consolas, monospace",
+              whiteSpace: "pre-wrap",
+              wordBreak: "break-word",
+              border: "1px solid #e5e7eb",
+              maxWidth: "100%",
+              overflowX: "auto",
+              boxSizing: "border-box",
+              minWidth: 0,
+            }}
+          >
+            {flopsResult
+              .split('\n')
+              .filter(line => !/^=+$/.test(line.trim()))
+              .join('\n')}
+          </div>
+        )}
+
+        {/* Reset Button */}
+        <button
+          type="button"
+          onClick={handleReset}
+          style={{
+            marginTop: "2rem",
+            width: "100%",
+            padding: "0.75rem",
+            borderRadius: 8,
+            border: "none",
+            background: "linear-gradient(to bottom, #f3f4f6 0%, #d1d5db 100%)",
+            color: "#333",
+            fontWeight: 400,
+            fontSize: "1.08rem",
+            fontFamily: "Menlo, Monaco, 'Liberation Mono', Consolas, monospace",
+            cursor: "pointer",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+            transition: "background 0.18s"
+          }}
+        >
+          Reset
+        </button>
+      </div>
+    </main>
+  );
+}
