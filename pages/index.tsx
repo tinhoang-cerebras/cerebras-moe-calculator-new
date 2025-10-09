@@ -30,7 +30,7 @@ const PRECISIONS = [
   "int4",
 ];
 
-const configTemplate = {
+const initialConfigTemplate = {
   name: "Default MoE Configuration",
   V: 32000,
   h: 4096,
@@ -54,6 +54,13 @@ export default function Home() {
   const [showTemplate, setShowTemplate] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  // Editable JSON Template State
+  const [configTemplate, setConfigTemplate] = useState<any>(initialConfigTemplate);
+  const [editMode, setEditMode] = useState(false);
+  const [editValue, setEditValue] = useState(JSON.stringify(initialConfigTemplate, null, 2));
+  const [editError, setEditError] = useState("");
+
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Handle modal mount/unmount for animation
@@ -62,10 +69,19 @@ export default function Home() {
       setModalVisible(true);
     } else if (modalVisible) {
       // Wait for animation before removing from DOM
-      const timeout = setTimeout(() => setModalVisible(false), 180); // match transition time
+      const timeout = setTimeout(() => {
+        setModalVisible(false);
+        setEditMode(false);
+        setEditError("");
+      }, 180);
       return () => clearTimeout(timeout);
     }
   }, [showTemplate]);
+
+  // If template changes, update edit value
+  useEffect(() => {
+    setEditValue(JSON.stringify(configTemplate, null, 2));
+  }, [configTemplate, showTemplate]);
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -132,9 +148,32 @@ export default function Home() {
   };
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(JSON.stringify(configTemplate, null, 2));
+    navigator.clipboard.writeText(editMode ? editValue : JSON.stringify(configTemplate, null, 2));
     setCopied(true);
     setTimeout(() => setCopied(false), 1300);
+  };
+
+  const handleEdit = () => {
+    setEditMode(true);
+    setEditValue(JSON.stringify(configTemplate, null, 2));
+    setEditError("");
+  };
+
+  const handleCancelEdit = () => {
+    setEditMode(false);
+    setEditError("");
+    setEditValue(JSON.stringify(configTemplate, null, 2));
+  };
+
+  const handleSaveEdit = () => {
+    try {
+      const parsed = JSON.parse(editValue);
+      setConfigTemplate(parsed);
+      setEditMode(false);
+      setEditError("");
+    } catch (e) {
+      setEditError("Invalid JSON format.");
+    }
   };
 
   return (
@@ -191,22 +230,111 @@ export default function Home() {
             <h3 style={{ fontWeight: 600, fontSize: "1.15rem", marginBottom: "1rem", color: "#1e293b" }}>
               Config JSON Template
             </h3>
-            <pre
-              style={{
-                background: "#f9fafb",
-                color: "#22223b",
-                borderRadius: 8,
-                padding: "1rem",
-                fontSize: "0.97rem",
-                lineHeight: 1.5,
-                marginBottom: "1.5rem",
-                fontFamily: "Menlo, Monaco, 'Liberation Mono', Consolas, monospace",
-                overflowX: "auto"
-              }}
-            >
-              {JSON.stringify(configTemplate, null, 2)}
-            </pre>
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem" }}>
+            {editMode ? (
+              <>
+                <textarea
+                  value={editValue}
+                  onChange={e => setEditValue(e.target.value)}
+                  style={{
+                    background: "#f9fafb",
+                    color: "#22223b",
+                    borderRadius: 8,
+                    padding: "1rem",
+                    fontSize: "0.97rem",
+                    fontFamily: "Menlo, Monaco, 'Liberation Mono', Consolas, monospace",
+                    border: "1px solid #e5e7eb",
+                    minHeight: 210,
+                    resize: "vertical",
+                    marginBottom: "1rem"
+                  }}
+                  rows={10}
+                  spellCheck={false}
+                  autoFocus
+                />
+                {editError && (
+                  <div style={{ color: "#b91c1c", background: "#fee2e2", borderRadius: 8, fontWeight: 500, padding: "0.5rem", marginBottom: "1rem" }}>
+                    {editError}
+                  </div>
+                )}
+              </>
+            ) : (
+              <pre
+                style={{
+                  background: "#f9fafb",
+                  color: "#22223b",
+                  borderRadius: 8,
+                  padding: "1rem",
+                  fontSize: "0.97rem",
+                  lineHeight: 1.5,
+                  marginBottom: "1.5rem",
+                  fontFamily: "Menlo, Monaco, 'Liberation Mono', Consolas, monospace",
+                  overflowX: "auto"
+                }}
+              >
+                {JSON.stringify(configTemplate, null, 2)}
+              </pre>
+            )}
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem", marginTop: 2 }}>
+              {!editMode && (
+                <button
+                  onClick={handleEdit}
+                  style={{
+                    border: "none",
+                    borderRadius: 6,
+                    padding: "0.5rem 1.2rem",
+                    background: "linear-gradient(to bottom, #e5e7eb, #d1d5db)",
+                    color: "#333",
+                    fontFamily: "Menlo, Monaco, 'Liberation Mono', Consolas, monospace",
+                    fontWeight: 400,
+                    cursor: "pointer",
+                    fontSize: "1rem",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+                    transition: "background 0.18s"
+                  }}
+                >
+                  Edit
+                </button>
+              )}
+              {editMode && (
+                <>
+                  <button
+                    onClick={handleSaveEdit}
+                    style={{
+                      border: "none",
+                      borderRadius: 6,
+                      padding: "0.5rem 1.2rem",
+                      background: "linear-gradient(to bottom, #e0fbe7, #a7f3d0)",
+                      color: "#14532d",
+                      fontFamily: "Menlo, Monaco, 'Liberation Mono', Consolas, monospace",
+                      fontWeight: 400,
+                      cursor: "pointer",
+                      fontSize: "1rem",
+                      boxShadow: "0 2px 8px rgba(34,197,94,0.06)",
+                      transition: "background 0.18s"
+                    }}
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={handleCancelEdit}
+                    style={{
+                      border: "none",
+                      borderRadius: 6,
+                      padding: "0.5rem 1.2rem",
+                      background: "linear-gradient(to bottom, #fee2e2, #fecaca)",
+                      color: "#b91c1c",
+                      fontFamily: "Menlo, Monaco, 'Liberation Mono', Consolas, monospace",
+                      fontWeight: 400,
+                      cursor: "pointer",
+                      fontSize: "1rem",
+                      boxShadow: "0 2px 8px rgba(239,68,68,0.06)",
+                      transition: "background 0.18s"
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </>
+              )}
               <button
                 onClick={handleCopy}
                 style={{
