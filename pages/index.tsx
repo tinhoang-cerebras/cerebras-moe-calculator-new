@@ -186,6 +186,14 @@ export default function Home() {
     setTimeout(() => document.body.removeChild(a), 0);
   };
 
+  // NEW: Reset the template in the modal (and cancel edit mode)
+  const handleModalReset = () => {
+    setConfigTemplate(initialConfigTemplate);
+    setEditMode(false);
+    setEditError("");
+    setEditValue(JSON.stringify(initialConfigTemplate, null, 2));
+  };
+
   return (
     <main
       style={{
@@ -380,6 +388,26 @@ export default function Home() {
                 }}
               >
                 Download
+              </button>
+              {/* NEW: Reset button */}
+              <button
+                onClick={handleModalReset}
+                style={{
+                  border: "none",
+                  borderRadius: 6,
+                  padding: "0.5rem 1.2rem",
+                  background: "linear-gradient(to bottom, #fef9c3, #fde68a)",
+                  color: "#92400e",
+                  fontFamily: "Menlo, Monaco, 'Liberation Mono', Consolas, monospace",
+                  fontWeight: 400,
+                  cursor: "pointer",
+                  fontSize: "1rem",
+                  boxShadow: "0 2px 8px rgba(202,138,4,0.06)",
+                  transition: "background 0.18s"
+                }}
+                title="Reset config JSON template to default"
+              >
+                Reset
               </button>
               <button
                 onClick={() => setShowTemplate(false)}
