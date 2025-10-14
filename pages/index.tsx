@@ -200,7 +200,7 @@ export default function Home() {
         minHeight: "100vh",
         background: "#fff",
         display: "flex",
-        alignItems: "center",
+        alignItems: "flex-start", // Align to top
         justifyContent: "center",
         paddingTop: 0,
         paddingBottom: 0,
