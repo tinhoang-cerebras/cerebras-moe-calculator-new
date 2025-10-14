@@ -437,7 +437,8 @@ export default function Home() {
         style={{
           background: "#fff",
           borderRadius: 20,
-          boxShadow: "0 4px 32px rgba(0,0,0,0.07)",
+          border: "2px solid #e5e7eb", // Added border
+          // boxShadow removed
           padding: "2.5rem 2.5rem",
           maxWidth: 400,
           width: "100%"
