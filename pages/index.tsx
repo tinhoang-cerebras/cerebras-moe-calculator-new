@@ -600,7 +600,7 @@ export default function Home() {
               transition: "background 0.18s"
             }}
           >
-            {loadingFlops ? "Calculating..." : "How fast will it run"}
+            {loadingFlops ? "Calculating..." : "How much compute do I need?"}
           </button>
         </div>
         {/* Error */}
