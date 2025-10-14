@@ -577,7 +577,7 @@ export default function Home() {
               transition: "background 0.18s"
             }}
           >
-            {loadingMemory ? "Calculating..." : "How much memory do I need"}
+            {loadingMemory ? "Calculating..." : "How much memory do I need?"}
           </button>
           <button
             type="button"
