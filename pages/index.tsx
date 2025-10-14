@@ -22,14 +22,6 @@ const defaultConfig: Config = {
   top_k: 2,
 };
 
-const PRECISIONS = [
-  "float32",
-  "bfloat16",
-  "float16",
-  "int8",
-  "int4",
-];
-
 const initialConfigTemplate = {
   name: "Default MoE Configuration",
   V: 32000,
@@ -44,7 +36,7 @@ const initialConfigTemplate = {
 };
 
 export default function Home() {
-  const [precision, setPrecision] = useState("bfloat16");
+  const [precision] = useState("bfloat16"); // No dropdown, always 'bfloat16'
   const [config, setConfig] = useState<Config>(defaultConfig);
   const [memoryResult, setMemoryResult] = useState("");
   const [flopsResult, setFlopsResult] = useState("");
@@ -68,7 +60,6 @@ export default function Home() {
     if (showTemplate) {
       setModalVisible(true);
     } else if (modalVisible) {
-      // Wait for animation before removing from DOM
       const timeout = setTimeout(() => {
         setModalVisible(false);
         setEditMode(false);
@@ -78,7 +69,6 @@ export default function Home() {
     }
   }, [showTemplate, modalVisible]);
 
-  // If template changes, update edit value
   useEffect(() => {
     setEditValue(JSON.stringify(configTemplate, null, 2));
   }, [configTemplate, showTemplate]);
@@ -114,10 +104,10 @@ export default function Home() {
   const handleCalculate = async (operation: "memory" | "flops") => {
     if (operation === "memory") {
       setLoadingMemory(true);
-      setFlopsResult(""); // Clear compute result when showing memory
+      setFlopsResult("");
     } else {
       setLoadingFlops(true);
-      setMemoryResult(""); // Clear memory result when showing compute
+      setMemoryResult("");
     }
     setError("");
     try {
@@ -145,7 +135,6 @@ export default function Home() {
 
   const handleReset = () => {
     setConfig(defaultConfig);
-    setPrecision("bfloat16");
     setMemoryResult("");
     setFlopsResult("");
     setError("");
@@ -191,7 +180,6 @@ export default function Home() {
     setTimeout(() => document.body.removeChild(a), 0);
   };
 
-  // NEW: Reset the template in the modal (and cancel edit mode)
   const handleModalReset = () => {
     setConfigTemplate(initialConfigTemplate);
     setEditMode(false);
@@ -205,7 +193,7 @@ export default function Home() {
         minHeight: "100vh",
         background: "#fff",
         display: "flex",
-        alignItems: "flex-start", // Top alignment
+        alignItems: "flex-start",
         justifyContent: "center",
         paddingTop: 0,
         paddingBottom: 0,
@@ -395,7 +383,6 @@ export default function Home() {
               >
                 Download
               </button>
-              {/* NEW: Reset button */}
               <button
                 onClick={handleModalReset}
                 style={{
@@ -534,30 +521,8 @@ export default function Home() {
           marginTop: -10,
           fontSize: "1rem"
         }}>
-          or select a precision below
+          {/* Precision selection removed */}
         </div>
-
-        {/* Precision Dropdown */}
-        <label style={{ fontWeight: 500, display: "block", margin: "16px 0" }}>
-          Precision:
-          <select
-            value={precision}
-            onChange={e => setPrecision(e.target.value)}
-            style={{
-              marginTop: 8,
-              padding: "0.6rem",
-              borderRadius: 8,
-              border: "1px solid #e5e7eb",
-              background: "#f9fafb",
-              fontSize: "1rem",
-              width: "100%"
-            }}
-          >
-            {PRECISIONS.map(p => (
-              <option key={p} value={p}>{p}</option>
-            ))}
-          </select>
-        </label>
 
         {/* Action Buttons */}
         <div style={{ display: "flex", gap: "1rem", marginTop: 24 }}>
