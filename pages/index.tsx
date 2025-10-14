@@ -76,7 +76,7 @@ export default function Home() {
       }, 180);
       return () => clearTimeout(timeout);
     }
-  }, [showTemplate]);
+  }, [showTemplate, modalVisible]);
 
   // If template changes, update edit value
   useEffect(() => {
@@ -112,8 +112,13 @@ export default function Home() {
   };
 
   const handleCalculate = async (operation: "memory" | "flops") => {
-    if (operation === "memory") setLoadingMemory(true);
-    else setLoadingFlops(true);
+    if (operation === "memory") {
+      setLoadingMemory(true);
+      setFlopsResult(""); // Clear compute result when showing memory
+    } else {
+      setLoadingFlops(true);
+      setMemoryResult(""); // Clear memory result when showing compute
+    }
     setError("");
     try {
       const res = await fetch("/api/calculate", {
@@ -200,7 +205,7 @@ export default function Home() {
         minHeight: "100vh",
         background: "#fff",
         display: "flex",
-        alignItems: "flex-start", // Align to top
+        alignItems: "flex-start", // Top alignment
         justifyContent: "center",
         paddingTop: 0,
         paddingBottom: 0,
