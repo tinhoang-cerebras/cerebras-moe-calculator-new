@@ -645,7 +645,7 @@ export default function Home() {
               .map(line =>
                 roundNumbersInLine(
                   /total memory needed/i.test(line)
-                    ? line.replace(/total memory needed\s*:/i, 'TOTAL MEMORY REQUIREMENTS:')
+                    ? line.replace(/total memory needed\s*:/i, 'Total Memory:')
                     : line
                 )
               )
