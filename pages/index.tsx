@@ -36,7 +36,7 @@ const initialConfigTemplate = {
 };
 
 export default function Home() {
-  const [precision] = useState("bfloat16"); // No dropdown, always 'bfloat16'
+  const [precision] = useState("bfloat16"); // Fixed precision, no UI
   const [config, setConfig] = useState<Config>(defaultConfig);
   const [memoryResult, setMemoryResult] = useState("");
   const [flopsResult, setFlopsResult] = useState("");
@@ -55,7 +55,7 @@ export default function Home() {
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Handle modal mount/unmount for animation
+  // Modal animation logic
   useEffect(() => {
     if (showTemplate) {
       setModalVisible(true);
@@ -73,6 +73,7 @@ export default function Home() {
     setEditValue(JSON.stringify(configTemplate, null, 2));
   }, [configTemplate, showTemplate]);
 
+  // AUTO-CALCULATE after config upload
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -83,6 +84,9 @@ export default function Home() {
         const loadedConfig: Config = { ...defaultConfig, ...parsed };
         setConfig(loadedConfig);
         setError("");
+        setFlopsResult("");
+        setMemoryResult("");
+        handleCalculateWithConfig("memory", loadedConfig);
       } catch {
         setError("Invalid JSON configuration file.");
       }
@@ -90,18 +94,25 @@ export default function Home() {
     reader.readAsText(file);
   };
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      const file = e.dataTransfer.files[0];
-      const event = { target: { files: [file] } } as unknown as ChangeEvent<HTMLInputElement>;
-      handleFileChange(event);
-      if (fileInputRef.current) fileInputRef.current.value = "";
+  // AUTO-CALCULATE after saving template edit
+  const handleSaveEdit = () => {
+    try {
+      const parsed = JSON.parse(editValue);
+      setConfigTemplate(parsed);
+      const loadedConfig: Config = { ...defaultConfig, ...parsed };
+      setConfig(loadedConfig);
+      setEditMode(false);
+      setEditError("");
+      setFlopsResult("");
+      setMemoryResult("");
+      handleCalculateWithConfig("memory", loadedConfig);
+    } catch (e) {
+      setEditError("Invalid JSON format.");
     }
   };
 
-  const handleCalculate = async (operation: "memory" | "flops") => {
+  // Support calculating with a specific config (used after file/template edit)
+  const handleCalculateWithConfig = async (operation: "memory" | "flops", newConfig: Config) => {
     if (operation === "memory") {
       setLoadingMemory(true);
       setFlopsResult("");
@@ -114,7 +125,7 @@ export default function Home() {
       const res = await fetch("/api/calculate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ config, precision, operation })
+        body: JSON.stringify({ config: newConfig, precision, operation })
       });
       const data = await res.json();
       if (data.error) {
@@ -130,6 +141,22 @@ export default function Home() {
     } finally {
       setLoadingMemory(false);
       setLoadingFlops(false);
+    }
+  };
+
+  // Standard manual calculation with the current config
+  const handleCalculate = async (operation: "memory" | "flops") => {
+    await handleCalculateWithConfig(operation, config);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const file = e.dataTransfer.files[0];
+      const event = { target: { files: [file] } } as unknown as ChangeEvent<HTMLInputElement>;
+      handleFileChange(event);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
@@ -157,17 +184,6 @@ export default function Home() {
     setEditMode(false);
     setEditError("");
     setEditValue(JSON.stringify(configTemplate, null, 2));
-  };
-
-  const handleSaveEdit = () => {
-    try {
-      const parsed = JSON.parse(editValue);
-      setConfigTemplate(parsed);
-      setEditMode(false);
-      setEditError("");
-    } catch (e) {
-      setEditError("Invalid JSON format.");
-    }
   };
 
   const handleDownload = () => {
@@ -513,7 +529,7 @@ export default function Home() {
           </div>
         </label>
 
-        {/* New Text Between Upload and Precision */}
+        {/* Spacer where precision dropdown was */}
         <div style={{
           textAlign: 'center',
           color: '#6b7280',
@@ -521,7 +537,6 @@ export default function Home() {
           marginTop: -10,
           fontSize: "1rem"
         }}>
-          {/* Precision selection removed */}
         </div>
 
         {/* Action Buttons */}
