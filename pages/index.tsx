@@ -624,7 +624,16 @@ export default function Home() {
           >
             {memoryResult
               .split('\n')
-              .filter(line => !/^=+$/.test(line.trim()))
+              .filter(line =>
+                /model weights/i.test(line) ||
+                /kv[- ]?cache/i.test(line) ||
+                /total memory needed/i.test(line)
+              )
+              .map(line =>
+                /total memory needed/i.test(line)
+                  ? line.replace(/total memory needed\s*:/i, 'TOTAL MEMORY REQUIREMENTS:')
+                  : line
+              )
               .join('\n')}
           </div>
         )}
