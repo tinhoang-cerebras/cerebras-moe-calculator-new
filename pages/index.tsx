@@ -36,7 +36,7 @@ const initialConfigTemplate = {
 };
 
 export default function Home() {
-  const [precision] = useState("bfloat16"); // Fixed precision, no UI
+  const [precision] = useState("bfloat16"); // Fixed, not user-editable
   const [config, setConfig] = useState<Config>(defaultConfig);
   const [memoryResult, setMemoryResult] = useState("");
   const [flopsResult, setFlopsResult] = useState("");
@@ -529,7 +529,7 @@ export default function Home() {
           </div>
         </label>
 
-        {/* Spacer where precision dropdown was */}
+        {/* Spacer for layout */}
         <div style={{
           textAlign: 'center',
           color: '#6b7280',
@@ -660,7 +660,9 @@ export default function Home() {
           >
             {flopsResult
               .split('\n')
-              .filter(line => !/^=+$/.test(line.trim()))
+              .filter(line => !/flops requirements/i.test(line))
+              .map(line => line.replace(/\(per tokens\)/gi, '').replace(/\(per token\)/gi, '').trimEnd())
+              .filter(line => line.trim() !== '')
               .join('\n')}
           </div>
         )}
