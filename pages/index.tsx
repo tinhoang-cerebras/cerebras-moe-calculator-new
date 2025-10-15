@@ -32,18 +32,19 @@ const initialConfigTemplate = {
   f_mult: 1.25,
   s: 2048,
   top_k: 2,
-  precision: "bfloat16"
+  precision: "bfloat16",
 };
 
 function roundNumbersInLine(line: string): string {
-  // This will match numbers like 1234.56789, 1,234.5678, 0.1234, but not 1234 or 1,234
-  return line.replace(/(\d{1,3}(?:,\d{3})*|\d+)\.(\d+)/g, (match) => {
-    // Remove commas for parsing
-    const num = parseFloat(match.replace(/,/g, ""));
-    // If it's not a number, leave as is
-    if (isNaN(num)) return match;
-    // Format with commas and two decimals
-    return num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  // This regex matches numbers with/without commas, decimals, or scientific notation
+  return line.replace(/(-?\d{1,3}(?:,\d{3})*|\d+)(\.\d+)?([eE][+-]?\d+)?/g, (match, intPart, decimalPart, sciPart) => {
+    let number = intPart.replace(/,/g, '') + (decimalPart || '') + (sciPart || '');
+    let num = Number(number);
+    // Only format if number and has decimals or scientific part
+    if (!isNaN(num) && (decimalPart || sciPart)) {
+      return num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    return match;
   });
 }
 
