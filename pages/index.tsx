@@ -35,6 +35,18 @@ const initialConfigTemplate = {
   precision: "bfloat16"
 };
 
+function roundNumbersInLine(line: string): string {
+  // This will match numbers like 1234.56789, 1,234.5678, 0.1234, but not 1234 or 1,234
+  return line.replace(/(\d{1,3}(?:,\d{3})*|\d+)\.(\d+)/g, (match) => {
+    // Remove commas for parsing
+    const num = parseFloat(match.replace(/,/g, ""));
+    // If it's not a number, leave as is
+    if (isNaN(num)) return match;
+    // Format with commas and two decimals
+    return num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  });
+}
+
 export default function Home() {
   const [precision] = useState("bfloat16"); // Fixed, not user-editable
   const [config, setConfig] = useState<Config>(defaultConfig);
@@ -630,9 +642,11 @@ export default function Home() {
                 /total memory needed/i.test(line)
               )
               .map(line =>
-                /total memory needed/i.test(line)
-                  ? line.replace(/total memory needed\s*:/i, 'TOTAL MEMORY REQUIREMENTS:')
-                  : line
+                roundNumbersInLine(
+                  /total memory needed/i.test(line)
+                    ? line.replace(/total memory needed\s*:/i, 'TOTAL MEMORY REQUIREMENTS:')
+                    : line
+                )
               )
               .join('\n')}
           </div>
@@ -661,7 +675,11 @@ export default function Home() {
             {flopsResult
               .split('\n')
               .filter(line => !/flops requirements/i.test(line))
-              .map(line => line.replace(/\(per tokens\)/gi, '').replace(/\(per token\)/gi, '').trimEnd())
+              .map(line =>
+                roundNumbersInLine(
+                  line.replace(/\(per tokens\)/gi, '').replace(/\(per token\)/gi, '').trimEnd()
+                )
+              )
               .filter(line => line.trim() !== '')
               .join('\n')}
           </div>
