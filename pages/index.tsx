@@ -515,6 +515,10 @@ export default function Home() {
               if (!fileDialogOpen.current) {
                 fileDialogOpen.current = true;
                 fileInputRef.current?.click();
+                // Reset the flag after a short delay to allow reopening
+                setTimeout(() => {
+                  fileDialogOpen.current = false;
+                }, 500);
               }
             }}
             onDragOver={e => {
@@ -527,6 +531,9 @@ export default function Home() {
               if ((e.key === "Enter" || e.key === " ") && !fileDialogOpen.current) {
                 fileDialogOpen.current = true;
                 fileInputRef.current?.click();
+                setTimeout(() => {
+                  fileDialogOpen.current = false;
+                }, 500);
               }
             }}
           >
