@@ -67,8 +67,6 @@ export default function Home() {
   const [editError, setEditError] = useState("");
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  // Track if file dialog is open to prevent repeated triggers
-  const fileDialogOpen = useRef(false);
 
   // Modal animation logic
   useEffect(() => {
@@ -512,14 +510,7 @@ export default function Home() {
               fontSize: "1rem"
             }}
             onClick={() => {
-              if (!fileDialogOpen.current) {
-                fileDialogOpen.current = true;
-                fileInputRef.current?.click();
-                // Reset the flag after a short delay to allow reopening
-                setTimeout(() => {
-                  fileDialogOpen.current = false;
-                }, 500);
-              }
+              fileInputRef.current?.click();
             }}
             onDragOver={e => {
               e.preventDefault();
@@ -528,12 +519,8 @@ export default function Home() {
             onDrop={handleDrop}
             tabIndex={0}
             onKeyPress={e => {
-              if ((e.key === "Enter" || e.key === " ") && !fileDialogOpen.current) {
-                fileDialogOpen.current = true;
+              if (e.key === "Enter" || e.key === " ") {
                 fileInputRef.current?.click();
-                setTimeout(() => {
-                  fileDialogOpen.current = false;
-                }, 500);
               }
             }}
           >
@@ -547,16 +534,18 @@ export default function Home() {
             <span style={{ fontSize: "0.97rem", color: "#6b7280" }}>
               (JSON config file)
             </span>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".json,application/json"
-              onChange={handleFileChange}
-              style={{
-                display: "none"
-              }}
-              tabIndex={-1}
-            />
+          </div>
+        </label>
+
+        {/* Hidden file input outside label to avoid auto-triggering on label focus */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".json,application/json"
+          onChange={handleFileChange}
+          style={{ display: "none" }}
+          tabIndex={-1}
+        />
           </div>
         </label>
 
