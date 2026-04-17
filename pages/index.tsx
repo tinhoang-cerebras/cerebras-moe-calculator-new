@@ -67,6 +67,8 @@ export default function Home() {
   const [editError, setEditError] = useState("");
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  // Track if file dialog is open to prevent repeated triggers
+  const fileDialogOpen = useRef(false);
 
   // Modal animation logic
   useEffect(() => {
@@ -88,7 +90,10 @@ export default function Home() {
 
   // AUTO-CALCULATE after config upload
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    fileDialogOpen.current = false;
     const file = e.target.files?.[0];
+    // Always reset input value so selecting same file again triggers onChange
+    if (fileInputRef.current) fileInputRef.current.value = "";
     if (!file) return;
     const reader = new FileReader();
     reader.onload = (event) => {
@@ -506,7 +511,12 @@ export default function Home() {
               color: "#374151",
               fontSize: "1rem"
             }}
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => {
+              if (!fileDialogOpen.current) {
+                fileDialogOpen.current = true;
+                fileInputRef.current?.click();
+              }
+            }}
             onDragOver={e => {
               e.preventDefault();
               e.stopPropagation();
@@ -514,7 +524,8 @@ export default function Home() {
             onDrop={handleDrop}
             tabIndex={0}
             onKeyPress={e => {
-              if (e.key === "Enter" || e.key === " ") {
+              if ((e.key === "Enter" || e.key === " ") && !fileDialogOpen.current) {
+                fileDialogOpen.current = true;
                 fileInputRef.current?.click();
               }
             }}
