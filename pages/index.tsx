@@ -534,9 +534,9 @@ export default function Home() {
             <span style={{ fontSize: "0.97rem", color: "#6b7280" }}>
               (JSON config file)
             </span>
+
           </div>
         </label>
-
         {/* Hidden file input outside label to avoid auto-triggering on label focus */}
         <input
           ref={fileInputRef}
@@ -546,8 +546,6 @@ export default function Home() {
           style={{ display: "none" }}
           tabIndex={-1}
         />
-          </div>
-        </label>
 
         {/* Spacer for layout */}
         <div style={{
