@@ -88,7 +88,7 @@ export default function Home() {
 
   // AUTO-CALCULATE after config upload
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    fileDialogOpen.current = false;
+    // fileDialogOpen removed; no longer needed
     const file = e.target.files?.[0];
     // Always reset input value so selecting same file again triggers onChange
     if (fileInputRef.current) fileInputRef.current.value = "";
