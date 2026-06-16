@@ -528,7 +528,7 @@ export default function Home() {
               color: "#6b7280",
               fontWeight: 400
             }}>
-              Drop your config file or "click" to choose file
+              Drop your config file or click to choose file
             </span>
             <br />
             <span style={{ fontSize: "0.97rem", color: "#6b7280" }}>

@@ -1,5 +1,5 @@
 import json
-from typing import Dict, Literal
+from typing import Dict, Literal, Optional
 from dataclasses import dataclass
 
 # Precision to bytes mapping
@@ -25,11 +25,18 @@ class MoEConfig:
     f_mult: float  # expert multiplier
     s: int  # sequence_length - for kv-cache calculation
     top_k: int  # number of experts activated per token
-    
+
+    def __post_init__(self):
+        if self.top_k > self.N:
+            raise ValueError(f"top_k ({self.top_k}) cannot exceed num_experts N ({self.N}).")
+
     @classmethod
     def from_dict(cls, config: Dict) -> 'MoEConfig':
         """Create config from dictionary"""
-        return cls(**config)
+        # Remove non-MoEConfig fields
+        config_params = {k: v for k, v in config.items() 
+                        if k in ['V', 'h', 'l', 'a', 'N', 'f_mult', 's', 'top_k']}
+        return cls(**config_params)
     
     @classmethod
     def get_default_config(cls) -> Dict:
@@ -56,7 +63,7 @@ class MoEMemoryCalculator:
     
     # ============ MEMORY CALCULATIONS ============
     
-    def calculate_embedding_weights(self) -> int:
+    def calculate_embedding_weights(self) -> float:
         """
         Embedding Weights (B) = 2 * k * V * h
         Factor of 2 accounts for input and output embedding matrices
@@ -66,7 +73,7 @@ class MoEMemoryCalculator:
         h = self.config.h
         return 2 * k * V * h
     
-    def calculate_ln_weights(self) -> int:
+    def calculate_ln_weights(self) -> float:
         """
         LN Weights (B) = 4 * k * h
         """
@@ -74,37 +81,37 @@ class MoEMemoryCalculator:
         h = self.config.h
         return 4 * k * h
     
-    def calculate_attention_weights(self) -> int:
+    def calculate_attention_weights(self) -> float:
         """
-        Attention Weights (B) = 4 * k * h * (h + 1)
+        Attention Weights (B) = 4 * k * h^2
         4 weight matrices: query, key, value, output, each h x h
         """
         k = self.bytes_per_param
         h = self.config.h
-        return 4 * k * h * (h + 1)
+        return 4 * k * h ** 2
     
-    def calculate_router_weights(self) -> int:
+    def calculate_router_weights(self) -> float:
         """
-        Router Weights (B) = k * N * (h + 1)
-        Weight matrix of size h x N with learnable router weights
+        Router Weights (B) = k * N * h
+        Weight matrix of size N x h with learnable router weights
         """
         k = self.bytes_per_param
         N = self.config.N
         h = self.config.h
-        return k * N * (h + 1)
+        return k * N * h
     
-    def calculate_moe_layer_weights(self) -> int:
+    def calculate_moe_layer_weights(self) -> float:
         """
-        MoE Layer Weights (B) = k * N * h * (3 * f_mult * h + 2 * f_mult + 1)
+        MoE Layer Weights (B) = 3 * k * N * f_mult * h^2
         Each expert uses SwiGLU with three linear transformations
         """
         k = self.bytes_per_param
         N = self.config.N
         h = self.config.h
         f_mult = self.config.f_mult
-        return k * N * h * (3 * f_mult * h + 2 * f_mult + 1)
+        return 3 * k * N * f_mult * h ** 2
     
-    def calculate_decoder_weights(self) -> int:
+    def calculate_decoder_weights(self) -> float:
         """
         Decoder Weights (B) = LN + Attention + Router + MoE Layer
         Combines all components with layer norms already included
@@ -116,7 +123,7 @@ class MoEMemoryCalculator:
         
         return ln + attention + router + moe_layer
     
-    def calculate_model_weights(self) -> int:
+    def calculate_model_weights(self) -> float:
         """
         Model Weights (B) = Embedding + l * Decoder
         Total weights across all layers
@@ -127,7 +134,7 @@ class MoEMemoryCalculator:
         
         return embedding + l * decoder
     
-    def calculate_kv_cache(self) -> int:
+    def calculate_kv_cache(self) -> float:
         """
         KV-Cache (B) = 2 * k * l * s * h
         Cache for keys (k) and values (v) across layers l,
@@ -142,16 +149,7 @@ class MoEMemoryCalculator:
     
     # ============ FLOPS CALCULATIONS ============
     
-    def calculate_embedding_flops(self) -> int:
-        """
-        Embedding Compute (FLOPs) = 4 * s * V * h
-        """
-        s = self.config.s
-        V = self.config.V
-        h = self.config.h
-        return 4 * s * V * h
-    
-    def calculate_ln_flops(self) -> int:
+    def calculate_ln_flops(self) -> float:
         """
         LN Compute (FLOPs) = 14 * s * h
         """
@@ -159,7 +157,7 @@ class MoEMemoryCalculator:
         h = self.config.h
         return 14 * s * h
     
-    def calculate_attention_flops(self) -> int:
+    def calculate_attention_flops(self) -> float:
         """
         Attention Compute (FLOPs) = s * (8 * h^2 + 4 * s * h + 3 * s * a)
         """
@@ -168,14 +166,15 @@ class MoEMemoryCalculator:
         a = self.config.a
         return s * (8 * h**2 + 4 * s * h + 3 * s * a)
     
-    def calculate_rope_flops(self) -> int:
+    def calculate_rope_flops(self) -> float:
         """
-        RoPE Compute (FLOPs) = 0.75 * h
+        RoPE Compute (FLOPs) = 0.75 * s * h
         """
+        s = self.config.s
         h = self.config.h
-        return 0.75 * h
+        return 0.75 * s * h
     
-    def calculate_router_flops(self) -> int:
+    def calculate_router_flops(self) -> float:
         """
         Router Compute (FLOPs) = s * N * (2 * h + 3)
         """
@@ -184,26 +183,26 @@ class MoEMemoryCalculator:
         h = self.config.h
         return s * N * (2 * h + 3)
     
-    def calculate_moe_layer_flops(self) -> int:
+    def calculate_moe_layer_flops(self) -> float:
         """
-        MoE Layer Compute (FLOPs) = 2 * top_k * s * f_mult * h * (4 * h + 3)
+        MoE Layer Compute (FLOPs) = 6 * top_k * s * f_mult * h * (h + 1)
         """
         top_k = self.config.top_k
         s = self.config.s
         f_mult = self.config.f_mult
         h = self.config.h
-        return 2 * top_k * s * f_mult * h * (4 * h + 3)
+        return 6 * top_k * s * f_mult * h * (h + 1)
     
-    def calculate_linear_layer_flops(self) -> int:
+    def calculate_unembedding_flops(self) -> float:
         """
-        Linear Layer Compute (FLOPs) = 2 * s * V * h
+        Unembedding Compute (FLOPs) = 2 * s * V * h
         """
         s = self.config.s
         V = self.config.V
         h = self.config.h
         return 2 * s * V * h
     
-    def calculate_decoder_flops(self) -> int:
+    def calculate_decoder_flops(self) -> float:
         """
         Decoder Compute (FLOPs) = LN + Attention + RoPE + Router + MoE Layer
         """
@@ -215,19 +214,19 @@ class MoEMemoryCalculator:
         
         return ln + attention + rope + router + moe_layer
     
-    def calculate_prefill_flops(self) -> int:
+    def calculate_prefill_flops(self) -> float:
         """
-        Prefill (FLOPs) = Embedding + l * Decoder
+        Prefill (FLOPs) = l * Decoder + Unembedding
         """
-        embedding = self.calculate_embedding_flops()
         decoder = self.calculate_decoder_flops()
+        unembedding = self.calculate_unembedding_flops()
         l = self.config.l
         
-        return embedding + l * decoder
+        return l * decoder + unembedding
     
     # Decode FLOPs calculations (with s=1)
     
-    def calculate_attention_flops_decode(self) -> int:
+    def calculate_attention_flops_decode(self) -> float:
         """
         Attention Compute w/ KV-Cache (FLOPs) = 8 * h^2 + 4 * s * h + 3 * s * a
         Note: s here is the context length (cached tokens)
@@ -237,7 +236,7 @@ class MoEMemoryCalculator:
         a = self.config.a
         return 8 * h**2 + 4 * s * h + 3 * s * a
     
-    def calculate_decoder_flops_decode(self) -> int:
+    def calculate_decoder_flops_decode(self) -> float:
         """
         Decoder Compute w/ KV-Cache = LN + Attention w/ KV-Cache + RoPE + Router + MoE Layer
         All components use s=1 except attention which uses cached context
@@ -259,22 +258,20 @@ class MoEMemoryCalculator:
         
         return ln + attention + rope + router + moe_layer
     
-    def calculate_decode_flops(self) -> int:
+    def calculate_decode_flops(self) -> float:
         """
-        Decode (FLOPs) = Embedding_{s=1} + l * Decoder w/ KV-Cache_{s=1}
+        Decode (FLOPs) = l * Decoder w/ KV-Cache_{s=1} + Unembedding_{s=1}
         """
-        original_s = self.config.s
-        
-        # Embedding uses s=1
-        self.config.s = 1
-        embedding = self.calculate_embedding_flops()
-        self.config.s = original_s
-        
         # Decoder uses KV-cache version
         decoder = self.calculate_decoder_flops_decode()
+
+        original_s = self.config.s
+        self.config.s = 1
+        unembedding = self.calculate_unembedding_flops()
+        self.config.s = original_s
         l = self.config.l
         
-        return embedding + l * decoder
+        return l * decoder + unembedding
     
     def calculate_total(self) -> Dict[str, float]:
         """
@@ -304,35 +301,43 @@ class MoEMemoryCalculator:
         }
 
 
-def load_config(config_path: str = None, config_dict: Dict = None) -> MoEConfig:
+def load_config_from_json(config_path: str = "moe_config.json") -> tuple[MoEConfig, str]:
     """
-    Load configuration from file or dictionary
+    Load configuration from JSON file
     
     Args:
         config_path: Path to JSON config file
-        config_dict: Dictionary with config parameters
     
     Returns:
-        MoEConfig object
+        Tuple of (MoEConfig object, precision string)
     """
-    if config_path:
+    try:
         with open(config_path, 'r') as f:
             config_data = json.load(f)
-    elif config_dict:
-        config_data = config_dict
-    else:
-        config_data = MoEConfig.get_default_config()
-    
-    return MoEConfig.from_dict(config_data)
+        
+        precision = config_data.get("precision", "bfloat16")
+        config = MoEConfig.from_dict(config_data)
+        return config, precision
+        
+    except FileNotFoundError:
+        print(f"Config file '{config_path}' not found. Using default configuration.")
+        return MoEConfig.from_dict(MoEConfig.get_default_config()), "bfloat16"
+    except json.JSONDecodeError as e:
+        print(f"Error parsing JSON file: {e}")
+        print("Using default configuration.")
+        return MoEConfig.from_dict(MoEConfig.get_default_config()), "bfloat16"
 
 
-def calculate_moe_metrics(config: MoEConfig, precision: PrecisionType) -> str:
+
+def calculate_moe_metrics(config: MoEConfig, precision: PrecisionType, 
+                         config_name: Optional[str] = None) -> str:
     """
     Main function to calculate memory requirements and FLOPs
     
     Args:
         config: MoEConfig object
         precision: Precision type for weights
+        config_name: Optional name of the configuration for display
     
     Returns:
         Formatted string with memory requirements and FLOPs
@@ -344,63 +349,47 @@ def calculate_moe_metrics(config: MoEConfig, precision: PrecisionType) -> str:
     prefill_tflops = metrics['prefill_flops'] / 1e12
     decode_tflops = metrics['decode_flops'] / 1e12
     
+    config_header = f" ({config_name})" if config_name else ""
+    
     result = f"""
-Memory Requirements for MoE Model
+Memory Requirements for MoE Model{config_header}
 {'=' * 50}
-Precision: {precision}
-Model Weights: {metrics['weights_gb']:.2f} GB
-KV-Cache: {metrics['kv_cache_gb']:.2f} GB
-{'=' * 50}
-TOTAL MEMORY NEEDED: {metrics['total_gb']:.2f} GB!
+Configuration:
+  Vocab Size (V): {config.V:,}
+  Hidden Size (h): {config.h:,}
+  Num Layers (l): {config.l}
+  Attention Heads (a): {config.a}
+  Num Experts (N): {config.N}
+  Expert Multiplier (f_mult): {config.f_mult}
+  Sequence Length (s): {config.s:,}
+  Top-K Experts: {config.top_k}
+  Precision: {precision}
 
-FLOPs Requirements
+Memory Breakdown:
+  Model Weights: {metrics['weights_gb']:.2f} GB
+  KV-Cache: {metrics['kv_cache_gb']:.2f} GB
 {'=' * 50}
-Prefill FLOPs: {prefill_tflops:.2f} TFLOPs
-Decode FLOPs (per token): {decode_tflops:.6f} TFLOPs
+TOTAL MEMORY NEEDED: {metrics['total_gb']:.2f} GB
+
+FLOPs Requirements:
+  Prefill FLOPs: {prefill_tflops:.2f} TFLOPs
+  Decode FLOPs (per token): {decode_tflops:.6f} TFLOPs
 {'=' * 50}
 """
     return result
 
 
 def main():
-    """Example usage"""
-    print("MoE Memory Calculator")
+    """Example usage with JSON config file"""
+    print("MoE Memory & FLOPs Calculator")
     print("=" * 50)
     
-    # Option 1: Use default config
-    print("\nUsing default configuration...")
-    config = load_config()
+    # Load configuration
+    config, precision = load_config_from_json()
     
-    # Option 2: Or load from dict
-    # custom_config = {
-    #     "V": 50000,
-    #     "h": 8192,
-    #     "l": 48,
-    #     "a": 64,
-    #     "N": 16,
-    #     "f_mult": 1.5,
-    #     "s": 4096,
-    #     "top_k": 2
-    # }
-    # config = load_config(config_dict=custom_config)
-    
-    # Get precision from user
-    print("\nAvailable precisions: float32, bfloat16, float16, int8, int4")
-    precision_input = input("Enter precision (default: bfloat16): ").strip().lower()
-    
-    # Validate and set precision
-    if precision_input == "":
-        precision = "bfloat16"
-    elif precision_input in PRECISION_BYTES:
-        precision = precision_input
-    else:
-        print(f"Invalid precision '{precision_input}'. Using default: bfloat16")
-        precision = "bfloat16"
-    
-    # Calculate and display results
-    print(calculate_moe_metrics(config, precision))
+    # Calculate and display results (only once, with final precision)
+    print(calculate_moe_metrics(config, precision, "moe_config.json"))
 
 
 if __name__ == "__main__":
     main()
-

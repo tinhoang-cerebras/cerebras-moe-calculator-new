@@ -21,6 +21,8 @@ interface MoEConfig {
   top_k: number;
 }
 
+const CONFIG_KEYS = ["V", "h", "l", "a", "N", "f_mult", "s", "top_k"] as const;
+
 function getDefaultConfig(): MoEConfig {
   return {
     V: 32000,
@@ -32,6 +34,25 @@ function getDefaultConfig(): MoEConfig {
     s: 2048,
     top_k: 2,
   };
+}
+
+function buildConfig(input: unknown): MoEConfig {
+  const config = { ...getDefaultConfig() };
+
+  if (input && typeof input === "object") {
+    for (const key of CONFIG_KEYS) {
+      const value = (input as Partial<Record<keyof MoEConfig, unknown>>)[key];
+      if (typeof value === "number") {
+        config[key] = value;
+      }
+    }
+  }
+
+  if (config.top_k > config.N) {
+    throw new Error(`top_k (${config.top_k}) cannot exceed num_experts N (${config.N}).`);
+  }
+
+  return config;
 }
 
 class MoEMemoryCalculator {
@@ -60,19 +81,19 @@ class MoEMemoryCalculator {
   calculate_attention_weights() {
     const { h } = this.config;
     const k = this.bytes_per_param;
-    return 4 * k * h * (h + 1);
+    return 4 * k * h ** 2;
   }
 
   calculate_router_weights() {
     const { N, h } = this.config;
     const k = this.bytes_per_param;
-    return k * N * (h + 1);
+    return k * N * h;
   }
 
   calculate_moe_layer_weights() {
     const { N, h, f_mult } = this.config;
     const k = this.bytes_per_param;
-    return k * N * h * (3 * f_mult * h + 2 * f_mult + 1);
+    return 3 * k * N * f_mult * h ** 2;
   }
 
   calculate_decoder_weights() {
@@ -96,11 +117,6 @@ class MoEMemoryCalculator {
   }
 
   // FLOPs calculations
-  calculate_embedding_flops() {
-    const { s, V, h } = this.config;
-    return 4 * s * V * h;
-  }
-
   calculate_ln_flops() {
     const { s, h } = this.config;
     return 14 * s * h;
@@ -112,8 +128,8 @@ class MoEMemoryCalculator {
   }
 
   calculate_rope_flops() {
-    const { h } = this.config;
-    return 0.75 * h;
+    const { s, h } = this.config;
+    return 0.75 * s * h;
   }
 
   calculate_router_flops() {
@@ -123,10 +139,10 @@ class MoEMemoryCalculator {
 
   calculate_moe_layer_flops() {
     const { top_k, s, f_mult, h } = this.config;
-    return 2 * top_k * s * f_mult * h * (4 * h + 3);
+    return 6 * top_k * s * f_mult * h * (h + 1);
   }
 
-  calculate_linear_layer_flops() {
+  calculate_unembedding_flops() {
     const { s, V, h } = this.config;
     return 2 * s * V * h;
   }
@@ -143,7 +159,7 @@ class MoEMemoryCalculator {
 
   calculate_prefill_flops() {
     const { l } = this.config;
-    return this.calculate_embedding_flops() + l * this.calculate_decoder_flops();
+    return l * this.calculate_decoder_flops() + this.calculate_unembedding_flops();
   }
 
   calculate_attention_flops_decode() {
@@ -164,13 +180,15 @@ class MoEMemoryCalculator {
   }
 
   calculate_decode_flops() {
-    const orig_s = this.config.s;
-    this.config.s = 1;
-    const embedding = this.calculate_embedding_flops();
-    this.config.s = orig_s;
     const { l } = this.config;
     const decoder = this.calculate_decoder_flops_decode();
-    return embedding + l * decoder;
+
+    const orig_s = this.config.s;
+    this.config.s = 1;
+    const unembedding = this.calculate_unembedding_flops();
+    this.config.s = orig_s;
+
+    return l * decoder + unembedding;
   }
 
   calculate_total() {
@@ -204,7 +222,7 @@ function formatMemory(metrics: ReturnType<MoEMemoryCalculator["calculate_total"]
     `Precision: ${metrics.precision}\n` +
     `Model Weights: ${metrics.weights_gb.toFixed(2)} GB\n` +
     `KV-Cache: ${metrics.kv_cache_gb.toFixed(2)} GB\n` +
-    `TOTAL MEMORY NEEDED: ${metrics.total_gb.toFixed(2)} GB!\n`
+    `TOTAL MEMORY NEEDED: ${metrics.total_gb.toFixed(2)} GB\n`
   );
 }
 
@@ -230,18 +248,14 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     return;
   }
 
-  const config: MoEConfig = {
-    ...getDefaultConfig(),
-    ...(req.body.config || {}),
-  };
-  const precision: PrecisionType =
-    req.body.precision in PRECISION_BYTES
-      ? req.body.precision
-      : "bfloat16";
-
-  const operation = req.body.operation; // "memory" or "flops"
-
   try {
+    const config = buildConfig(req.body.config);
+    const precision: PrecisionType =
+      req.body.precision in PRECISION_BYTES
+        ? req.body.precision
+        : "bfloat16";
+
+    const operation = req.body.operation; // "memory" or "flops"
     const calculator = new MoEMemoryCalculator(config, precision);
     const metrics = calculator.calculate_total();
 
@@ -255,6 +269,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       metrics,
     });
   } catch (e) {
-    res.status(500).json({ error: String(e) });
+    const message = e instanceof Error ? e.message : String(e);
+    res.status(400).json({ error: message });
   }
 }
